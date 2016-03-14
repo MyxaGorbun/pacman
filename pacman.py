@@ -21,9 +21,12 @@ def draw_background(scr, img=None):
 
 
 class Map:
-        def __init__(self, h):
+        def __init__(self, h, n):
             self.map = [None for i in range(h)]
-            txt = open('./resources/map.txt', 'r')
+            if n == 1:
+                txt = open('./resources/map.txt', 'r')
+            elif n == 2:
+                txt = open('./resources/map2.txt', 'r')
             for x in range(h):
                 a = txt.readline()
                 a = a.rstrip()
@@ -31,6 +34,7 @@ class Map:
 
         def get(self, x, y):
                 return self.map[x][y]
+
 
 class GameObject(pygame.sprite.Sprite):
     def __init__(self, img, x, y, tile_size, map_size):
@@ -79,6 +83,7 @@ class Wall(GameObject):
         GameObject.__init__(self, './resources/wall.png', x, y, tile_size, map_size)
         self.direction = 0
         self.velocity = 0
+
 
 class Ghost(GameObject):
     def __init__(self, x, y, tile_size, map_size):
@@ -148,6 +153,7 @@ class Pacman(GameObject):
 
         self.set_coord(self.x, self.y)
 
+
 def process_events(events, packman):
     for event in events:
         if (event.type == QUIT) or (event.type == KEYDOWN and event.key == K_ESCAPE):
@@ -167,6 +173,7 @@ def process_events(events, packman):
                 pacman.image = pygame.image.load('./resources/pacman1.png')
             elif event.key == K_SPACE:
                 packman.direction = 0
+                pacman.image = pygame.image.load('./resources/pacman0.png')
 
 
 class Dot(GameObject):
@@ -184,18 +191,36 @@ class Dot(GameObject):
             self.image = pygame.image.load('./resources/vk.png')
 
 
+class Win(GameObject):
+    def __init__(self, x, y, tile_size, map_size):
+        GameObject.__init__(self, './resources/win.png', x, y, tile_size, map_size)
+        self.direction = 0
+        self.velocity = 0
+
+
+class Loose(GameObject):
+    def __init__(self, x, y, tile_size, map_size):
+        GameObject.__init__(self, './resources/loose.jpg', x, y, tile_size, map_size)
+        self.direction = 0
+        self.velocity = 0
+
+
 if __name__ == '__main__':
+    print('Choose map')
+    n = int(input())
     win = None
     init_window()
     tile_size = 32
     map_size = 16
-    map = Map(16)
+    map = Map(16, n)
+    winner = Win(3, 3, tile_size, map_size)
+    looser = Loose(1, 1, tile_size, map_size)
     ghosts = []
     for x in range(map_size):
         for y in range(map_size):
             if map.get(x,y) == 'g':
                 ghosts.append(Ghost(x, y, tile_size, map_size))
-    pacman = Pacman(3, 1, tile_size, map_size)
+    pacman = Pacman(10, 1, tile_size, map_size)
     walls = []
     for x in range(map_size):
         for y in range(map_size):
@@ -218,11 +243,13 @@ if __name__ == '__main__':
         for dot in dots:
             dot.game_tick()
         draw_background(screen, background)
-        pacman.draw(screen)
+        for ghost in ghosts:
+            ghost.draw(screen)
         for w in walls:
             w.draw(screen)
         for dot in dots:
             dot.draw(screen)
+        pacman.draw(screen)
         i = 0
         for dot in dots:
             if not dot.eaten:
@@ -231,12 +258,19 @@ if __name__ == '__main__':
             win = True
             break
         for ghost in ghosts:
-        if int(ghost.x) == int(pacman.x) and int(ghost.y) == int(pacman.y):
-            win = False
+            if int(ghost.x) == int(pacman.x) and int(ghost.y) == int(pacman.y):
+                win = False
+                break
+        if win == False:
             break
         pygame.display.update()
 
+
     if win == True:
         print('Good game, well played!')
+        winner.draw(screen)
     else:
         print('Dniwe')
+        looser.draw(screen)
+    pygame.display.update()
+    pygame.time.delay(1000)
